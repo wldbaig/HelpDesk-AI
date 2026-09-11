@@ -15,7 +15,7 @@ public static class DependencyInjection
     {
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.Configure<OpenAiOptions>(configuration.GetSection(OpenAiOptions.SectionName));
-        services.AddDbContext<HelpDeskDbContext>(options => options.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
+        services.AddDbContext<HelpDeskDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ITicketRepository, TicketRepository>();
         services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<HelpDeskDbContext>());

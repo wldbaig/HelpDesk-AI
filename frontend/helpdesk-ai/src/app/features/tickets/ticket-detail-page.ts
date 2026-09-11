@@ -8,43 +8,132 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, Observable } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { Ticket, User } from '../../core/models';
+import { TICKET_CATEGORIES, TICKET_PRIORITIES, TICKET_STATUSES } from '../../core/ticket-options';
 
 @Component({
-  selector:'app-ticket-detail-page',
-  imports:[DatePipe,RouterLink,ReactiveFormsModule,MatButtonModule,MatFormFieldModule,MatInputModule,MatProgressSpinnerModule,MatSelectModule],
-  template:`
-    <a routerLink="/tickets" class="back">← Back to ticket queue</a>
-    @if(loading()){<div class="loading"><mat-spinner diameter="38"/><span>Opening conversation…</span></div>}
-    @if(ticket();as t){
-      <header class="ticket-header"><div><div class="meta"><span class="status">{{t.status}}</span><span>#{{t.id.slice(0,8)}}</span><span>{{t.createdAt|date:'medium'}}</span></div><h1>{{t.title}}</h1></div><button mat-flat-button class="ai-button" (click)="analyze()" [disabled]="analyzing()">@if(analyzing()){<mat-spinner diameter="19"/>}@else{✦ Analyze with AI}</button></header>
-      <div class="workspace">
-        <section class="main-column">
-          <article class="card issue"><p class="eyebrow">Customer message</p><p>{{t.description}}</p></article>
-          <article class="card ai-card">
-            <div class="card-heading"><div><p class="eyebrow">AI copilot</p><h2>Suggested response</h2></div>@if(t.sentiment){<div class="analysis"><span>{{t.category}}</span><span [class]="'sentiment '+t.sentiment.toLowerCase()">{{t.sentiment}} sentiment</span></div>}</div>
-            @if(t.suggestedReply){<mat-form-field appearance="outline"><mat-label>Reply draft</mat-label><textarea matInput rows="8" [value]="draft()" (input)="draft.set($any($event.target).value)"></textarea></mat-form-field><div class="reply-actions"><small>Edit the draft before sending it to a customer.</small><button mat-stroked-button (click)="saveDraft()" [disabled]="saving()">Save draft</button></div>}@else{<div class="ai-empty"><span>✦</span><strong>No analysis yet</strong><p>Run AI analysis to classify sentiment and prepare a response grounded in this ticket.</p></div>}
-          </article>
-          <article class="card"><p class="eyebrow">Internal conversation</p><h2>Comments</h2><div class="comments">@for(comment of t.comments;track comment.id){<div class="comment"><span class="avatar">{{comment.author.name.charAt(0)}}</span><div><div><strong>{{comment.author.name}}</strong><time>{{comment.createdAt|date:'MMM d, h:mm a'}}</time></div><p>{{comment.body}}</p></div></div>}@empty{<p class="quiet">No internal comments yet.</p>}</div><form [formGroup]="commentForm" (ngSubmit)="addComment()"><mat-form-field appearance="outline"><mat-label>Add an internal comment</mat-label><textarea matInput rows="3" formControlName="body"></textarea></mat-form-field><button mat-flat-button [disabled]="commentForm.invalid||commenting()">Add comment</button></form></article>
-        </section>
-        <aside class="card properties"><p class="eyebrow">Ticket properties</p><label>Status</label><mat-form-field appearance="outline"><mat-select [value]="t.status" (selectionChange)="updateProperty('status',$event.value)">@for(x of statuses;track x){<mat-option [value]="x">{{x}}</mat-option>}</mat-select></mat-form-field><label>Priority</label><mat-form-field appearance="outline"><mat-select [value]="t.priority" (selectionChange)="updateProperty('priority',$event.value)">@for(x of priorities;track x){<mat-option [value]="x">{{x}}</mat-option>}</mat-select></mat-form-field><label>Category</label><mat-form-field appearance="outline"><mat-select [value]="t.category" (selectionChange)="updateProperty('category',$event.value)">@for(x of categories;track x){<mat-option [value]="x">{{x}}</mat-option>}</mat-select></mat-form-field><label>Assigned to</label><mat-form-field appearance="outline"><mat-select [value]="t.assignedAgent?.id" [disabled]="auth.user()?.role!=='Admin'" (selectionChange)="assign($event.value)"><mat-option [value]="null">Unassigned</mat-option>@for(agent of agents();track agent.id){<mat-option [value]="agent.id">{{agent.name}}</mat-option>}</mat-select></mat-form-field><div class="updated"><span>Last updated</span><strong>{{t.updatedAt|date:'medium'}}</strong></div></aside>
-      </div>
-    }
-  `,
-  styles:[`
-    .back{display:inline-block;margin-bottom:1.25rem;color:#4770b5;text-decoration:none;font-weight:650;font-size:.85rem}.ticket-header{display:flex;align-items:end;justify-content:space-between;gap:1rem;margin-bottom:1.5rem}.ticket-header h1{font-size:2rem;letter-spacing:-.035em;margin:.55rem 0 0}.meta{display:flex;gap:.7rem;align-items:center;color:var(--muted);font-size:.75rem}.status{background:#eaf2ff;color:#2867c9;padding:.25rem .5rem;border-radius:99px;font-weight:750}.ai-button{background:linear-gradient(120deg,#396fdb,#704fd0)!important;color:#fff!important}.ai-button mat-spinner{display:inline-block}.workspace{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:1rem;align-items:start}.main-column{display:grid;gap:1rem}.card{background:#fff;border:1px solid var(--line);border-radius:1rem;padding:1.4rem;box-shadow:0 8px 28px rgba(28,45,75,.04)}.eyebrow{color:#3975dc;text-transform:uppercase;letter-spacing:.12em;font-size:.7rem;font-weight:800;margin:0 0 .45rem}.issue>p:last-child{font-size:1.02rem;line-height:1.75;margin-bottom:.2rem;white-space:pre-wrap}.card h2{font-size:1.15rem;margin:.2rem 0}.card-heading{display:flex;align-items:start;justify-content:space-between;margin-bottom:1rem}.analysis{display:flex;gap:.45rem}.analysis span{font-size:.74rem;font-weight:750;padding:.3rem .55rem;border-radius:99px;background:#edf1f7}.sentiment.positive{background:#e9f7f1;color:#147354}.sentiment.negative{background:#fff0ec;color:#b5461d}.ai-card{border-color:#cddcff;background:linear-gradient(145deg,#fff 65%,#f1f5ff)}.ai-card mat-form-field,form mat-form-field{width:100%}.reply-actions{display:flex;justify-content:space-between;align-items:center;color:var(--muted)}.ai-empty{min-height:170px;display:grid;place-items:center;align-content:center;text-align:center}.ai-empty>span{font-size:1.8rem;color:#6d5ed2}.ai-empty p{max-width:480px;color:var(--muted);margin:.3rem 0}.comments{display:grid;gap:1rem;margin:1.4rem 0}.comment{display:grid;grid-template-columns:38px 1fr;gap:.8rem}.avatar{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:#e8effd;color:#2b61b9;font-weight:750}.comment>div>div{display:flex;justify-content:space-between}.comment time{font-size:.72rem;color:var(--muted)}.comment p{margin:.3rem 0;line-height:1.55}.quiet{color:var(--muted)}form button{float:right}.properties{display:grid}.properties label{font-size:.76rem;color:var(--muted);font-weight:700;margin:.65rem 0 .3rem}.properties mat-form-field{margin-bottom:-1.1rem}.updated{border-top:1px solid var(--line);margin-top:1.4rem;padding-top:1rem;display:grid;gap:.2rem}.updated span{font-size:.72rem;color:var(--muted)}.updated strong{font-size:.8rem}.loading{height:55vh;display:grid;place-items:center;align-content:center;gap:1rem;color:var(--muted)}@media(max-width:950px){.workspace{grid-template-columns:1fr}.properties{grid-row:1;grid-template-columns:repeat(3,1fr);gap:.6rem}.properties>.eyebrow,.updated{grid-column:1/-1}.properties label{display:none}}@media(max-width:650px){.ticket-header{align-items:start;flex-direction:column}.ticket-header h1{font-size:1.55rem}.properties{grid-template-columns:1fr}.card-heading{display:grid;gap:.8rem}.analysis{flex-wrap:wrap}.reply-actions small{display:none}}
-  `]
+  selector: 'app-ticket-detail-page',
+  imports: [
+    DatePipe,
+    RouterLink,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
+    MatSelectModule,
+  ],
+  templateUrl: './ticket-detail-page.html',
+  styleUrl: './ticket-detail-page.scss',
 })
 export class TicketDetailPage {
-  private readonly api=inject(ApiService);private readonly route=inject(ActivatedRoute);private readonly fb=inject(FormBuilder);private readonly snack=inject(MatSnackBar);readonly auth=inject(AuthService);readonly ticket=signal<Ticket|null>(null);readonly agents=signal<User[]>([]);readonly loading=signal(true);readonly analyzing=signal(false);readonly saving=signal(false);readonly commenting=signal(false);readonly draft=signal('');readonly statuses=['Open','InProgress','Resolved','Closed'];readonly priorities=['Low','Medium','High','Urgent'];readonly categories=['Billing','Technical','Account','Other'];readonly commentForm=this.fb.nonNullable.group({body:['',[Validators.required,Validators.maxLength(2000)]]});private readonly id=this.route.snapshot.paramMap.get('id')!;
-  constructor(){this.api.ticket(this.id).pipe(finalize(()=>this.loading.set(false))).subscribe(t=>this.setTicket(t));this.api.agents().subscribe(a=>this.agents.set(a));}
-  analyze():void{this.analyzing.set(true);this.api.analyze(this.id).pipe(finalize(()=>this.analyzing.set(false))).subscribe(t=>{this.setTicket(t);this.snack.open('AI analysis is ready.','Dismiss',{duration:3000});});}
-  saveDraft():void{const t=this.ticket();if(!t)return;this.saving.set(true);this.api.updateTicket(t.id,{title:t.title,description:t.description,category:t.category,priority:t.priority,status:t.status,suggestedReply:this.draft()}).pipe(finalize(()=>this.saving.set(false))).subscribe(updated=>{this.setTicket({...t,...updated,comments:t.comments});this.snack.open('Reply draft saved.','Dismiss',{duration:2500});});}
-  updateProperty(key:'status'|'priority'|'category',value:string):void{const t=this.ticket();if(!t)return;this.api.updateTicket(t.id,{title:t.title,description:t.description,category:key==='category'?value:t.category,priority:key==='priority'?value:t.priority,status:key==='status'?value:t.status,suggestedReply:t.suggestedReply}).subscribe(updated=>this.setTicket({...t,...updated,comments:t.comments}));}
-  assign(agentId:string):void{if(!agentId)return;this.api.assignTicket(this.id,agentId).subscribe(updated=>this.setTicket({...this.ticket()!,...updated,comments:this.ticket()!.comments}));}
-  addComment():void{if(this.commentForm.invalid)return;this.commenting.set(true);this.api.addComment(this.id,this.commentForm.getRawValue().body).pipe(finalize(()=>this.commenting.set(false))).subscribe(comment=>{const t=this.ticket()!;this.ticket.set({...t,comments:[...t.comments,comment]});this.commentForm.reset();});}
-  private setTicket(t:Ticket):void{this.ticket.set({...t,comments:t.comments??[]});this.draft.set(t.suggestedReply??'');}
+  private readonly api = inject(ApiService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly fb = inject(FormBuilder);
+  private readonly snack = inject(MatSnackBar);
+  readonly auth = inject(AuthService);
+
+  readonly ticket = signal<Ticket | null>(null);
+  readonly agents = signal<User[]>([]);
+  readonly loading = signal(true);
+  readonly analyzing = signal(false);
+  readonly saving = signal(false);
+  readonly commenting = signal(false);
+  readonly draft = signal('');
+
+  readonly statuses = TICKET_STATUSES;
+  readonly priorities = TICKET_PRIORITIES;
+  readonly categories = TICKET_CATEGORIES;
+
+  readonly commentForm = this.fb.nonNullable.group({
+    body: ['', [Validators.required, Validators.maxLength(2000)]],
+  });
+
+  private readonly id = this.route.snapshot.paramMap.get('id')!;
+
+  constructor() {
+    this.api
+      .ticket(this.id)
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe((ticket) => this.setTicket(ticket));
+    this.api.agents().subscribe((agents) => this.agents.set(agents));
+  }
+
+  analyze(): void {
+    this.analyzing.set(true);
+    this.api
+      .analyze(this.id)
+      .pipe(finalize(() => this.analyzing.set(false)))
+      .subscribe((ticket) => {
+        this.setTicket(ticket);
+        this.snack.open('AI analysis is ready.', 'Dismiss', { duration: 3000 });
+      });
+  }
+
+  saveDraft(): void {
+    const current = this.ticket();
+    if (!current) return;
+
+    this.saving.set(true);
+    this.persist(current, { suggestedReply: this.draft() })
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe((updated) => {
+        this.applyUpdate(current, updated);
+        this.snack.open('Reply draft saved.', 'Dismiss', { duration: 2500 });
+      });
+  }
+
+  updateProperty(key: 'status' | 'priority' | 'category', value: string): void {
+    const current = this.ticket();
+    if (!current) return;
+
+    this.persist(current, { [key]: value }).subscribe((updated) => this.applyUpdate(current, updated));
+  }
+
+  assign(agentId: string): void {
+    if (!agentId) return;
+
+    const current = this.ticket()!;
+    this.api.assignTicket(this.id, agentId).subscribe((updated) => this.applyUpdate(current, updated));
+  }
+
+  addComment(): void {
+    if (this.commentForm.invalid) return;
+
+    this.commenting.set(true);
+    this.api
+      .addComment(this.id, this.commentForm.getRawValue().body)
+      .pipe(finalize(() => this.commenting.set(false)))
+      .subscribe((comment) => {
+        const current = this.ticket()!;
+        this.ticket.set({ ...current, comments: [...current.comments, comment] });
+        this.commentForm.reset();
+      });
+  }
+
+  /** Sends the full ticket payload with a set of overridden fields applied. */
+  private persist(base: Ticket, overrides: Partial<Ticket>): Observable<Ticket> {
+    return this.api.updateTicket(base.id, {
+      title: base.title,
+      description: base.description,
+      category: base.category,
+      priority: base.priority,
+      status: base.status,
+      suggestedReply: base.suggestedReply,
+      ...overrides,
+    });
+  }
+
+  /** Merges a server response back onto the current ticket, keeping already-loaded comments. */
+  private applyUpdate(base: Ticket, updated: Ticket): void {
+    this.setTicket({ ...base, ...updated, comments: base.comments });
+  }
+
+  private setTicket(ticket: Ticket): void {
+    this.ticket.set({ ...ticket, comments: ticket.comments ?? [] });
+    this.draft.set(ticket.suggestedReply ?? '');
+  }
 }

@@ -1,0 +1,65 @@
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Overview</p>
+    <h1>Good {{ greeting }}, here’s the queue.</h1>
+    <p>Current workload and resolution signals across your support team.</p>
+  </div>
+  <a mat-flat-button routerLink="/tickets">Open ticket queue</a>
+</header>
+
+@if (loading()) {
+  <div class="loading">
+    <mat-spinner diameter="38" />
+    <span>Reading the support queue…</span>
+  </div>
+}
+
+@if (stats(); as s) {
+  <section class="stat-grid">
+    <article>
+      <span>All tickets</span>
+      <strong>{{ s.total }}</strong>
+      <small>total conversations</small>
+    </article>
+    <article>
+      <span>Needs attention</span>
+      <strong class="blue">{{ s.open }}</strong>
+      <small>open or in progress</small>
+    </article>
+    <article>
+      <span>Resolved</span>
+      <strong class="green">{{ s.closed }}</strong>
+      <small>resolved or closed</small>
+    </article>
+    <article>
+      <span>Unassigned</span>
+      <strong class="orange">{{ s.unassigned }}</strong>
+      <small>waiting for an owner</small>
+    </article>
+  </section>
+
+  <section class="insight-grid">
+    <article class="chart-card">
+      <div>
+        <p class="eyebrow">Ticket mix</p>
+        <h2>Requests by category</h2>
+      </div>
+      <div class="chart-wrap">
+        <canvas baseChart [data]="chartData" [options]="chartOptions" type="doughnut"></canvas>
+      </div>
+    </article>
+    <article class="status-card">
+      <p class="eyebrow">Workflow</p>
+      <h2>Status distribution</h2>
+      <div class="status-list">
+        @for (item of statusItems; track item.name) {
+          <div>
+            <span><i [style.background]="item.color"></i>{{ item.name }}</span>
+            <strong>{{ item.value }}</strong>
+            <em><b [style.width.%]="item.percent" [style.background]="item.color"></b></em>
+          </div>
+        }
+      </div>
+    </article>
+  </section>
+}

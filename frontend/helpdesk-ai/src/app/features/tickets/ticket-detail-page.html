@@ -1,0 +1,145 @@
+<a routerLink="/tickets" class="back">← Back to ticket queue</a>
+
+@if (loading()) {
+  <div class="loading">
+    <mat-spinner diameter="38" />
+    <span>Opening conversation…</span>
+  </div>
+}
+
+@if (ticket(); as t) {
+  <header class="ticket-header">
+    <div>
+      <div class="meta">
+        <span class="status">{{ t.status }}</span>
+        <span>#{{ t.id.slice(0, 8) }}</span>
+        <span>{{ t.createdAt | date: 'medium' }}</span>
+      </div>
+      <h1>{{ t.title }}</h1>
+    </div>
+    <button mat-flat-button class="ai-button" (click)="analyze()" [disabled]="analyzing()">
+      @if (analyzing()) {
+        <mat-spinner diameter="19" />
+      } @else {
+        ✦ Analyze with AI
+      }
+    </button>
+  </header>
+
+  <div class="workspace">
+    <section class="main-column">
+      <article class="card issue">
+        <p class="eyebrow">Customer message</p>
+        <p>{{ t.description }}</p>
+      </article>
+
+      <article class="card ai-card">
+        <div class="card-heading">
+          <div>
+            <p class="eyebrow">AI copilot</p>
+            <h2>Suggested response</h2>
+          </div>
+          @if (t.sentiment) {
+            <div class="analysis">
+              <span>{{ t.category }}</span>
+              <span [class]="'sentiment ' + t.sentiment.toLowerCase()">{{ t.sentiment }} sentiment</span>
+            </div>
+          }
+        </div>
+        @if (t.suggestedReply) {
+          <mat-form-field appearance="outline">
+            <mat-label>Reply draft</mat-label>
+            <textarea matInput rows="8" [value]="draft()" (input)="draft.set($any($event.target).value)"></textarea>
+          </mat-form-field>
+          <div class="reply-actions">
+            <small>Edit the draft before sending it to a customer.</small>
+            <button mat-stroked-button (click)="saveDraft()" [disabled]="saving()">Save draft</button>
+          </div>
+        } @else {
+          <div class="ai-empty">
+            <span>✦</span>
+            <strong>No analysis yet</strong>
+            <p>Run AI analysis to classify sentiment and prepare a response grounded in this ticket.</p>
+          </div>
+        }
+      </article>
+
+      <article class="card">
+        <p class="eyebrow">Internal conversation</p>
+        <h2>Comments</h2>
+        <div class="comments">
+          @for (comment of t.comments; track comment.id) {
+            <div class="comment">
+              <span class="avatar">{{ comment.author.name.charAt(0) }}</span>
+              <div>
+                <div>
+                  <strong>{{ comment.author.name }}</strong>
+                  <time>{{ comment.createdAt | date: 'MMM d, h:mm a' }}</time>
+                </div>
+                <p>{{ comment.body }}</p>
+              </div>
+            </div>
+          } @empty {
+            <p class="quiet">No internal comments yet.</p>
+          }
+        </div>
+        <form [formGroup]="commentForm" (ngSubmit)="addComment()">
+          <mat-form-field appearance="outline">
+            <mat-label>Add an internal comment</mat-label>
+            <textarea matInput rows="3" formControlName="body"></textarea>
+          </mat-form-field>
+          <button mat-flat-button [disabled]="commentForm.invalid || commenting()">Add comment</button>
+        </form>
+      </article>
+    </section>
+
+    <aside class="card properties">
+      <p class="eyebrow">Ticket properties</p>
+
+      <label>Status</label>
+      <mat-form-field appearance="outline">
+        <mat-select [value]="t.status" (selectionChange)="updateProperty('status', $event.value)">
+          @for (status of statuses; track status) {
+            <mat-option [value]="status">{{ status }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <label>Priority</label>
+      <mat-form-field appearance="outline">
+        <mat-select [value]="t.priority" (selectionChange)="updateProperty('priority', $event.value)">
+          @for (priority of priorities; track priority) {
+            <mat-option [value]="priority">{{ priority }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <label>Category</label>
+      <mat-form-field appearance="outline">
+        <mat-select [value]="t.category" (selectionChange)="updateProperty('category', $event.value)">
+          @for (category of categories; track category) {
+            <mat-option [value]="category">{{ category }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <label>Assigned to</label>
+      <mat-form-field appearance="outline">
+        <mat-select
+          [value]="t.assignedAgent?.id"
+          [disabled]="auth.user()?.role !== 'Admin'"
+          (selectionChange)="assign($event.value)">
+          <mat-option [value]="null">Unassigned</mat-option>
+          @for (agent of agents(); track agent.id) {
+            <mat-option [value]="agent.id">{{ agent.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <div class="updated">
+        <span>Last updated</span>
+        <strong>{{ t.updatedAt | date: 'medium' }}</strong>
+      </div>
+    </aside>
+  </div>
+}
