@@ -1,0 +1,22 @@
+@HelpDeskAI.Api_HostAddress = http://localhost:5006
+
+POST {{HelpDeskAI.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@helpdesk.local",
+  "password": "Admin123!"
+}
+
+### Paste the token returned above
+@token = replace-me
+
+GET {{HelpDeskAI.Api_HostAddress}}/api/dashboard/stats
+Authorization: Bearer {{token}}
+
+###
+
+GET {{HelpDeskAI.Api_HostAddress}}/api/tickets?page=1&pageSize=10&status=Open
+Authorization: Bearer {{token}}
+
+###

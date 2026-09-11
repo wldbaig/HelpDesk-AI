@@ -1,0 +1,26 @@
+# .NET
+**/bin/
+**/obj/
+.dotnet/
+*.user
+*.suo
+helpdesk.db
+backend/src/HelpDeskAI.Api/helpdesk.db
+
+# Angular / Node
+**/node_modules/
+**/dist/
+**/.angular/
+npm-debug.log*
+pnpm-debug.log*
+
+# Local configuration
+.env
+.env.*
+!.env.example
+
+# Editors and OS
+.vs/
+.idea/
+.DS_Store
+Thumbs.db

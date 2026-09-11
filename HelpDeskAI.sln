@@ -1,0 +1,51 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "backend", "backend", "{12A3A690-8B60-4245-8A84-AB8CC3D885BB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{7395B655-0944-4B81-9824-B68A0E349C4E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelpDeskAI.Domain", "backend\src\HelpDeskAI.Domain\HelpDeskAI.Domain.csproj", "{24D15151-5CBC-4846-BD31-3E82E3EACE16}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelpDeskAI.Application", "backend\src\HelpDeskAI.Application\HelpDeskAI.Application.csproj", "{3660DC8E-5DBC-4B22-BC4A-3F8F9AACE3A7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelpDeskAI.Infrastructure", "backend\src\HelpDeskAI.Infrastructure\HelpDeskAI.Infrastructure.csproj", "{3C2A4112-DF29-4869-9077-F50759A99570}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelpDeskAI.Api", "backend\src\HelpDeskAI.Api\HelpDeskAI.Api.csproj", "{FC839AB9-4301-4F18-B569-777B6B6FA64B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{24D15151-5CBC-4846-BD31-3E82E3EACE16}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24D15151-5CBC-4846-BD31-3E82E3EACE16}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24D15151-5CBC-4846-BD31-3E82E3EACE16}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24D15151-5CBC-4846-BD31-3E82E3EACE16}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3660DC8E-5DBC-4B22-BC4A-3F8F9AACE3A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3660DC8E-5DBC-4B22-BC4A-3F8F9AACE3A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3660DC8E-5DBC-4B22-BC4A-3F8F9AACE3A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3660DC8E-5DBC-4B22-BC4A-3F8F9AACE3A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C2A4112-DF29-4869-9077-F50759A99570}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C2A4112-DF29-4869-9077-F50759A99570}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C2A4112-DF29-4869-9077-F50759A99570}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C2A4112-DF29-4869-9077-F50759A99570}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC839AB9-4301-4F18-B569-777B6B6FA64B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC839AB9-4301-4F18-B569-777B6B6FA64B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC839AB9-4301-4F18-B569-777B6B6FA64B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC839AB9-4301-4F18-B569-777B6B6FA64B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7395B655-0944-4B81-9824-B68A0E349C4E} = {12A3A690-8B60-4245-8A84-AB8CC3D885BB}
+		{24D15151-5CBC-4846-BD31-3E82E3EACE16} = {7395B655-0944-4B81-9824-B68A0E349C4E}
+		{3660DC8E-5DBC-4B22-BC4A-3F8F9AACE3A7} = {7395B655-0944-4B81-9824-B68A0E349C4E}
+		{3C2A4112-DF29-4869-9077-F50759A99570} = {7395B655-0944-4B81-9824-B68A0E349C4E}
+		{FC839AB9-4301-4F18-B569-777B6B6FA64B} = {7395B655-0944-4B81-9824-B68A0E349C4E}
+	EndGlobalSection
+EndGlobal
