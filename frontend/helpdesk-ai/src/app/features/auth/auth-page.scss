@@ -1,0 +1,153 @@
+.auth-layout {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(360px, 44%) 1fr;
+  background: #f4f7fb;
+}
+
+.auth-story {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3rem;
+  color: #fff;
+  background: radial-gradient(circle at 85% 15%, #375fb7 0, transparent 30%),
+    linear-gradient(145deg, #10192b, #1b2b4b);
+}
+
+.brand {
+  font-size: 1.15rem;
+
+  span {
+    display: inline-grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    margin-right: .5rem;
+    border-radius: .6rem;
+    background: #4d83ef;
+    font-weight: 800;
+  }
+
+  b {
+    color: #7cafff;
+  }
+}
+
+.story-copy {
+  max-width: 560px;
+
+  h1 {
+    font-size: clamp(2.2rem, 4vw, 4.4rem);
+    line-height: 1.03;
+    letter-spacing: -.055em;
+    margin: .8rem 0 1.25rem;
+  }
+
+  > p:last-child {
+    max-width: 440px;
+    color: #bdc9dd;
+    font-size: 1.05rem;
+    line-height: 1.7;
+  }
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  font-size: .72rem;
+  font-weight: 800;
+  color: #6e9eff;
+}
+
+.signal {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #aab8d0;
+
+  strong {
+    font-size: 2.4rem;
+    color: #fff;
+  }
+
+  span {
+    max-width: 200px;
+    font-size: .82rem;
+  }
+}
+
+.form-panel {
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
+mat-card {
+  width: min(450px, 100%);
+  padding: 2.4rem;
+  border-color: #dde4ee !important;
+  box-shadow: 0 20px 60px rgba(19, 35, 63, .09);
+}
+
+h2 {
+  font-size: 1.8rem;
+  letter-spacing: -.03em;
+  margin: .35rem 0 1.8rem;
+}
+
+form {
+  display: grid;
+  gap: .4rem;
+
+  > button {
+    height: 48px;
+    margin-top: .6rem;
+  }
+}
+
+mat-spinner {
+  margin: auto;
+}
+
+.switch {
+  text-align: center;
+  margin: 1.6rem 0 .8rem;
+  color: #667085;
+
+  a {
+    color: #2867d9;
+    font-weight: 700;
+  }
+}
+
+.demo {
+  border-top: 1px solid #e6eaf0;
+  padding-top: 1rem;
+  display: grid;
+  text-align: center;
+  color: #7b8595;
+  font-size: .78rem;
+
+  button {
+    border: 0;
+    background: none;
+    color: #2f64ba;
+    cursor: pointer;
+  }
+}
+
+@media (max-width: 800px) {
+  .auth-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-story {
+    display: none;
+  }
+
+  .form-panel {
+    padding: 1rem;
+  }
+}

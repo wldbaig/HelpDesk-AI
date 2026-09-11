@@ -1,12 +1,13 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
+import { environment } from './environment';
 import { ApiResponse, AuthResponse, Comment, DashboardStats, PagedResult, Ticket, TicketFilters, User } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:5006/api';
+  private readonly baseUrl = environment.apiBaseUrl;
   private unwrap<T>() { return map((response: ApiResponse<T>) => response.data); }
   login(body: { email: string; password: string }): Observable<AuthResponse> { return this.http.post<ApiResponse<AuthResponse>>(`${this.baseUrl}/auth/login`, body).pipe(this.unwrap()); }
   register(body: { name: string; email: string; password: string }): Observable<AuthResponse> { return this.http.post<ApiResponse<AuthResponse>>(`${this.baseUrl}/auth/register`, body).pipe(this.unwrap()); }

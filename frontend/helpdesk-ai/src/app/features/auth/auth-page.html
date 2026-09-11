@@ -1,0 +1,59 @@
+<main class="auth-layout">
+  <section class="auth-story">
+    <div class="brand"><span>H</span> HelpDesk <b>AI</b></div>
+    <div class="story-copy">
+      <p class="eyebrow">A clearer support queue</p>
+      <h1>Resolve the right conversation, at the right moment.</h1>
+      <p>One workspace for team workload, customer context, and AI-assisted replies.</p>
+    </div>
+    <div class="signal">
+      <strong>6</strong>
+      <span>seeded conversations ready for triage</span>
+    </div>
+  </section>
+
+  <section class="form-panel">
+    <mat-card appearance="outlined">
+      <p class="eyebrow">{{ isRegister ? 'Create workspace access' : 'Welcome back' }}</p>
+      <h2>{{ isRegister ? 'Join the support team' : 'Sign in to your queue' }}</h2>
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        @if (isRegister) {
+          <mat-form-field appearance="outline">
+            <mat-label>Full name</mat-label>
+            <input matInput formControlName="name" autocomplete="name">
+          </mat-form-field>
+        }
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" autocomplete="email">
+          <mat-error>Enter a valid email.</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+          <input matInput type="password" formControlName="password" autocomplete="current-password">
+          <mat-hint>At least 8 characters, an uppercase letter, and a number</mat-hint>
+        </mat-form-field>
+        <button mat-flat-button type="submit" [disabled]="form.invalid || loading()">
+          @if (loading()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            {{ isRegister ? 'Create account' : 'Sign in' }}
+          }
+        </button>
+      </form>
+
+      <p class="switch">
+        {{ isRegister ? 'Already have access?' : 'New to HelpDesk AI?' }}
+        <a [routerLink]="isRegister ? '/login' : '/register'">{{ isRegister ? 'Sign in' : 'Create an account' }}</a>
+      </p>
+
+      @if (!isRegister) {
+        <div class="demo">
+          <span>Demo admin</span>
+          <button type="button" (click)="fillDemo()">admin&#64;helpdesk.local · Admin123!</button>
+        </div>
+      }
+    </mat-card>
+  </section>
+</main>

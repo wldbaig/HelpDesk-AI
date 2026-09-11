@@ -1,0 +1,18 @@
+mat-dialog-content {
+  min-width: min(540px, 80vw);
+
+  > p {
+    color: var(--muted);
+    margin-top: 0;
+  }
+}
+
+form {
+  display: grid;
+  gap: .35rem;
+  padding-top: .5rem;
+}
+
+textarea {
+  resize: vertical;
+}

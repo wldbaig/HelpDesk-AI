@@ -4,8 +4,6 @@
 .dotnet/
 *.user
 *.suo
-helpdesk.db
-backend/src/HelpDeskAI.Api/helpdesk.db
 
 # Angular / Node
 **/node_modules/

@@ -1,0 +1,169 @@
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  margin-bottom: 1.8rem;
+
+  h1 {
+    font-size: 2rem;
+    margin: .25rem 0;
+    letter-spacing: -.035em;
+  }
+
+  p:last-child {
+    color: var(--muted);
+    margin: 0;
+  }
+}
+
+.eyebrow {
+  color: #3975dc;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+
+  article > span {
+    color: var(--muted);
+    font-size: .82rem;
+    font-weight: 650;
+  }
+
+  strong {
+    display: block;
+    font-size: 2.6rem;
+    letter-spacing: -.05em;
+    margin: .8rem 0 .15rem;
+  }
+
+  small {
+    color: #8993a3;
+  }
+}
+
+.stat-grid article,
+.chart-card,
+.status-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  padding: 1.4rem;
+  box-shadow: 0 8px 28px rgba(28, 45, 75, .045);
+}
+
+.blue { color: #2867d9; }
+.green { color: #16825e; }
+.orange { color: #d66a1e; }
+
+.insight-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, .65fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.chart-card,
+.status-card {
+  min-height: 370px;
+}
+
+.chart-card {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  align-items: center;
+}
+
+.chart-wrap {
+  height: 270px;
+}
+
+h2 {
+  font-size: 1.2rem;
+  margin: .25rem 0;
+}
+
+.status-list {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 2rem;
+
+  div {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: .45rem;
+  }
+
+  span {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+
+  i {
+    width: .55rem;
+    height: .55rem;
+    border-radius: 50%;
+  }
+
+  em {
+    grid-column: 1 / -1;
+    height: 6px;
+    border-radius: 6px;
+    background: #edf0f5;
+    overflow: hidden;
+  }
+
+  b {
+    display: block;
+    height: 100%;
+    border-radius: 6px;
+  }
+}
+
+.loading {
+  height: 50vh;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 1rem;
+  color: var(--muted);
+}
+
+@media (max-width: 1050px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .insight-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .page-header {
+    align-items: start;
+    gap: 1rem;
+
+    > a {
+      display: none;
+    }
+  }
+
+  .stat-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .chart-card {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-wrap {
+    height: 230px;
+  }
+}

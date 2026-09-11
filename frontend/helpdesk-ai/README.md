@@ -2,6 +2,22 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.7.
 
+## Environment variables
+
+Runtime configuration is read from a `.env` file at the project root by [`@ngx-env/builder`](https://github.com/chihab/dotenv-run). Only variables prefixed with `NG_APP_` are exposed to the browser bundle.
+
+Copy the template before running the app:
+
+```bash
+cp .env.example .env
+```
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `NG_APP_API_BASE_URL` | Base URL of the HelpDesk AI backend API | `http://localhost:5006/api` |
+
+`.env` is git-ignored; commit only `.env.example`. The value is consumed through `src/app/core/environment.ts`, which exposes a typed `environment` object to the rest of the app.
+
 ## Development server
 
 To start a local development server, run:

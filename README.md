@@ -1,6 +1,6 @@
 # HelpDesk AI
 
-HelpDesk AI is a full-stack support operations POC built with .NET 8, EF Core/SQLite, Angular 22, Angular Material, Chart.js, JWT authentication, and OpenAI Chat Completions.
+HelpDesk AI is a full-stack support operations POC built with .NET 8, EF Core/SQL Server, Angular 22, Angular Material, Chart.js, JWT authentication, and OpenAI Chat Completions.
 
 ## Visual guide
 
@@ -50,7 +50,7 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-    DB[("Tickets in SQLite")] --> Stats["GET /api/dashboard/stats"]
+    DB[("Tickets in SQL Server")] --> Stats["GET /api/dashboard/stats"]
     Stats --> Total["All tickets<br/>6 total"]
     Stats --> Attention["Needs attention<br/>3 Open + 1 InProgress = 4"]
     Stats --> Done["Resolved card<br/>1 Resolved + 1 Closed = 2"]
@@ -196,7 +196,7 @@ HelpDeskAI.sln
 │   └── HelpDeskAI.Infrastructure  EF Core, repositories, identity, OpenAI, seeding
 └── frontend/helpdesk-ai           standalone Angular application
     └── src/app
-        ├── core                   API/auth services, guard, interceptors, models
+        ├── core                   API/auth services, guard, interceptors, models, environment config
         └── features               auth, dashboard, ticket list/detail workflows
 ```
 
@@ -221,7 +221,7 @@ flowchart LR
         API --> App --> Infra
     end
     Client -->|"HTTP + Bearer JWT"| API
-    Infra --> SQLite[("SQLite<br/>Users / Tickets / Comments")]
+    Infra --> SqlServer[("SQL Server<br/>Users / Tickets / Comments")]
     Infra -->|"AI analysis only"| OpenAI["OpenAI Chat Completions"]
 ```
 
@@ -298,13 +298,14 @@ flowchart LR
     Keep --> Ready
 ```
 
-Seeding occurs only when the user table is empty. Existing databases are not reset on startup. SQL Server is a possible provider change; the checked-in configuration and migration target SQLite.
+Seeding occurs only when the user table is empty. Existing databases are not reset on startup. The checked-in configuration and migration target SQL Server; the connection string defaults to a local SQL Server LocalDB instance and can point at any SQL Server.
 
 ## Prerequisites
 
 - .NET 8 SDK
+- SQL Server (LocalDB ships with Visual Studio; any SQL Server instance works by changing the connection string)
 - Node.js 22.22.3+ or 24.15+
-- pnpm 11+
+- npm 10+ (bundled with Node.js)
 - An OpenAI API key only when using **Analyze with AI**
 
 ## Backend setup
@@ -314,11 +315,12 @@ From the repository root:
 ```powershell
 dotnet restore HelpDeskAI.sln --configfile NuGet.Config
 dotnet user-secrets set --project backend/src/HelpDeskAI.Api "OpenAI:ApiKey" "YOUR_OPENAI_API_KEY"
-dotnet user-secrets set --project backend/src/HelpDeskAI.Api "Jwt:Key" "a-long-random-local-signing-key-of-at-least-32-characters"
 dotnet run --project backend/src/HelpDeskAI.Api --launch-profile http
 ```
 
-The API runs at `http://localhost:5006`; Swagger is at `http://localhost:5006/swagger`. On first run EF Core applies the checked-in migration, creates `helpdesk.db`, and seeds demo data.
+The API runs at `http://localhost:5006`; Swagger is at `http://localhost:5006/swagger`. On first run EF Core applies the checked-in migration, creates the `HelpDeskAI` database on the configured SQL Server instance, and seeds demo data.
+
+The default connection string targets SQL Server LocalDB (`Server=(localdb)\MSSQLLocalDB;Database=HelpDeskAI;...`); repoint `ConnectionStrings:DefaultConnection` at another SQL Server instance if you prefer. A development `Jwt:Key` is already set in `appsettings.json`, so the API runs without extra setup — override it with a private key in any real deployment.
 
 Environment variables work as an alternative to user-secrets:
 
@@ -327,7 +329,7 @@ $env:OPENAI__APIKEY="YOUR_OPENAI_API_KEY"
 $env:JWT__KEY="a-long-random-signing-key-of-at-least-32-characters"
 ```
 
-Do not commit keys. For production, provide the connection string, JWT key, OpenAI key/model, allowed frontend origin, and HTTPS settings through the deployment secret/configuration system. AutoMapper 15+ also requires a commercial `AutoMapper:LicenseKey` for production deployment; development and testing are permitted without one.
+The local development `Jwt:Key` in `appsettings.json` is only a convenience for running the POC; never reuse it in a real deployment, and do not commit OpenAI keys. For production, provide the connection string, JWT key, OpenAI key/model, allowed frontend origin, and HTTPS settings through the deployment secret/configuration system. AutoMapper 15+ also requires a commercial `AutoMapper:LicenseKey` for production deployment; development and testing are permitted without one.
 
 ## Frontend setup
 
@@ -335,9 +337,12 @@ In a second terminal:
 
 ```powershell
 cd frontend/helpdesk-ai
-pnpm install
-pnpm start
+copy .env.example .env
+npm install
+npm start
 ```
+
+The API base URL is read from `.env` (`NG_APP_API_BASE_URL`, defaulting to `http://localhost:5006/api`) by `@ngx-env/builder`. `.env` is git-ignored, so copy `.env.example` to `.env` and adjust it per machine; only variables prefixed with `NG_APP_` are exposed to the browser bundle.
 
 Open `http://localhost:4200`. The JWT is held in `sessionStorage`, so it is cleared when the browser session ends. In a production system, pair the SPA with a backend-for-frontend and `HttpOnly`, `Secure`, `SameSite` cookies when the deployment topology permits it.
 
@@ -360,7 +365,7 @@ sequenceDiagram
     participant Service as TicketService
     participant AI as IAiTicketService
     participant OpenAI as OpenAI API
-    participant DB as SQLite
+    participant DB as SQL Server
 
     Agent->>UI: Click Analyze with AI
     UI->>API: POST /api/tickets/{id}/analyze + JWT
@@ -406,8 +411,8 @@ dotnet ef migrations add MigrationName --project backend/src/HelpDeskAI.Infrastr
 
 # Angular production build and tests
 cd frontend/helpdesk-ai
-pnpm build
-pnpm test
+npm run build
+npm test
 ```
 
 ## API conventions
