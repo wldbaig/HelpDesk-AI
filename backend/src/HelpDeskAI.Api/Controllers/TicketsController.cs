@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using HelpDeskAI.Application.Common;
+using HelpDeskAI.Application.Contracts;
 using HelpDeskAI.Application.DTOs;
 using HelpDeskAI.Application.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -50,7 +51,7 @@ public sealed class TicketsController(TicketService tickets) : ControllerBase
     }
 
     [HttpPost("{id:guid}/analyze")]
-    public async Task<ActionResult<ApiResponse<TicketDto>>> Analyze(Guid id, CancellationToken cancellationToken) => Ok(ApiResponse<TicketDto>.Ok(await tickets.AnalyzeAsync(id, cancellationToken), "AI analysis completed."));
+    public async Task<ActionResult<ApiResponse<TicketDto>>> Analyze(Guid id, [FromQuery] AiProvider provider = AiProvider.OpenAi, CancellationToken cancellationToken = default) => Ok(ApiResponse<TicketDto>.Ok(await tickets.AnalyzeAsync(id, provider, cancellationToken), "AI analysis completed."));
 
     private Guid GetUserId()
     {

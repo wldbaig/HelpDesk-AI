@@ -6,21 +6,22 @@ using Microsoft.Extensions.Options;
 
 namespace HelpDeskAI.Infrastructure.AI;
 
-public sealed class OpenAiOptions
+public sealed class GrokOptions
 {
-    public const string SectionName = "OpenAI";
+    public const string SectionName = "Grok";
     public string ApiKey { get; init; } = string.Empty;
-    public string Model { get; init; } = "gpt-5.6-luna";
-    public string BaseUrl { get; init; } = "https://api.openai.com/v1/";
+    public string Model { get; init; } = "grok-4";
+    public string BaseUrl { get; init; } = "https://api.x.ai/v1/";
 }
 
-public sealed class OpenAiTicketService(HttpClient httpClient, IOptions<OpenAiOptions> options) : AiTicketServiceBase(httpClient)
+/// <summary>xAI Grok exposes an OpenAI-compatible chat-completions API, so the request shape matches OpenAI.</summary>
+public sealed class GrokTicketService(HttpClient httpClient, IOptions<GrokOptions> options) : AiTicketServiceBase(httpClient)
 {
-    private readonly OpenAiOptions _options = options.Value;
+    private readonly GrokOptions _options = options.Value;
 
-    public override AiProvider Provider => AiProvider.OpenAi;
-    protected override string ProviderName => "OpenAI";
-    protected override string ApiKeyConfigPath => "OpenAI:ApiKey";
+    public override AiProvider Provider => AiProvider.Grok;
+    protected override string ProviderName => "Grok";
+    protected override string ApiKeyConfigPath => "Grok:ApiKey";
     protected override string ApiKey => _options.ApiKey;
 
     protected override HttpRequestMessage CreateRequest(string userPrompt)
@@ -32,7 +33,7 @@ public sealed class OpenAiTicketService(HttpClient httpClient, IOptions<OpenAiOp
             model = _options.Model,
             messages = new object[]
             {
-                new { role = "developer", content = SystemPrompt },
+                new { role = "system", content = SystemPrompt },
                 new { role = "user", content = userPrompt }
             },
             response_format = new

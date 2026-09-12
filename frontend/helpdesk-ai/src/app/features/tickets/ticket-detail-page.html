@@ -17,13 +17,18 @@
       </div>
       <h1>{{ t.title }}</h1>
     </div>
-    <button mat-flat-button class="ai-button" (click)="analyze()" [disabled]="analyzing()">
+    <button mat-flat-button class="ai-button" [matMenuTriggerFor]="aiMenu" [disabled]="analyzing()">
       @if (analyzing()) {
         <mat-spinner diameter="19" />
       } @else {
-        ✦ Analyze with AI
+        ✦ Analyze with AI ▾
       }
     </button>
+    <mat-menu #aiMenu="matMenu">
+      @for (option of aiProviders; track option.value) {
+        <button mat-menu-item (click)="analyze(option.value)">{{ option.label }}</button>
+      }
+    </mat-menu>
   </header>
 
   <div class="workspace">

@@ -7,7 +7,7 @@ using HelpDeskAI.Domain.Enums;
 
 namespace HelpDeskAI.Application.Services;
 
-public sealed class TicketService(ITicketRepository tickets, IUserRepository users, IUnitOfWork unitOfWork, IAiTicketService ai, IMapper mapper)
+public sealed class TicketService(ITicketRepository tickets, IUserRepository users, IUnitOfWork unitOfWork, IAiTicketServiceResolver aiResolver, IMapper mapper)
 {
     public async Task<PagedResult<TicketDto>> GetPageAsync(TicketFilter filter, CancellationToken cancellationToken)
     {
@@ -69,10 +69,15 @@ public sealed class TicketService(ITicketRepository tickets, IUserRepository use
         return mapper.Map<CommentDto>(comment);
     }
 
-    public async Task<TicketDto> AnalyzeAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<TicketDto> AnalyzeAsync(Guid id, AiProvider provider, CancellationToken cancellationToken)
     {
-        var ticket = await FindAsync(id, false, cancellationToken);
-        var result = await ai.AnalyzeAsync(ticket.Title, ticket.Description, cancellationToken);
+        var ticket = await FindAsync(id, true, cancellationToken);
+        var comments = ticket.Comments
+            .OrderBy(c => c.CreatedAt)
+            .Select(c => $"{c.Author?.Name ?? "User"}: {c.Body}")
+            .ToList();
+        var ai = aiResolver.Resolve(provider);
+        var result = await ai.AnalyzeAsync(ticket.Title, ticket.Description, comments, cancellationToken);
         ticket.Category = Enum.Parse<TicketCategory>(result.Category, true);
         ticket.Sentiment = Enum.Parse<TicketSentiment>(result.Sentiment, true);
         ticket.SuggestedReply = result.SuggestedReply.Trim();
