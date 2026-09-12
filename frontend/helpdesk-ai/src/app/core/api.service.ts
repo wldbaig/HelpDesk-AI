@@ -23,5 +23,5 @@ export class ApiService {
   updateTicket(id: string, body: Partial<Ticket>): Observable<Ticket> { return this.http.put<ApiResponse<Ticket>>(`${this.baseUrl}/tickets/${id}`, body).pipe(this.unwrap()); }
   assignTicket(id: string, agentId: string): Observable<Ticket> { return this.http.post<ApiResponse<Ticket>>(`${this.baseUrl}/tickets/${id}/assign`, { agentId }).pipe(this.unwrap()); }
   addComment(id: string, body: string): Observable<Comment> { return this.http.post<ApiResponse<Comment>>(`${this.baseUrl}/tickets/${id}/comments`, { body }).pipe(this.unwrap()); }
-  analyze(id: string): Observable<Ticket> { return this.http.post<ApiResponse<Ticket>>(`${this.baseUrl}/tickets/${id}/analyze`, {}).pipe(this.unwrap()); }
+  analyze(id: string, provider: string): Observable<Ticket> { return this.http.post<ApiResponse<Ticket>>(`${this.baseUrl}/tickets/${id}/analyze`, {}, { params: new HttpParams().set('provider', provider) }).pipe(this.unwrap()); }
 }

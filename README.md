@@ -1,6 +1,6 @@
 # HelpDesk AI
 
-HelpDesk AI is a full-stack support operations POC built with .NET 8, EF Core/SQL Server, Angular 22, Angular Material, Chart.js, JWT authentication, and OpenAI Chat Completions.
+HelpDesk AI is a full-stack support operations POC built with .NET 8, EF Core/SQL Server, Angular 22, Angular Material, Chart.js, JWT authentication, and pluggable LLM providers (OpenAI, Grok, Gemini, Claude).
 
 ## Visual guide
 
@@ -113,7 +113,7 @@ This is a **suggested team workflow**, not an enforced transition sequence. The 
 | Marker | Feature | Detailed behavior |
 |---|---|---|
 | **1** | Customer context | Displays the complete title and description, status, shortened ticket ID and creation time. The description is the original issue context used by AI. |
-| **2** | Analyze with AI | Calls the backend for this ticket. A spinner replaces the button label and prevents another click while the request is pending. A successful response updates category, sentiment and suggested reply. |
+| **2** | Analyze with AI | A dropdown lets you choose the LLM provider (OpenAI, Grok, Gemini or Claude); the selection calls the backend for this ticket. A spinner replaces the button label and prevents another click while the request is pending. A successful response updates category, sentiment and suggested reply. |
 | **3** | Editable suggested reply | Shows the AI category and sentiment badges alongside an editable draft. **Save draft** persists edits. Saving a draft does not send an email or message to the customer. |
 | **4** | Internal comments | Adds a required comment up to 2,000 characters. Each comment records the signed-in author and creation time. The detail endpoint loads comments chronologically. These are internal notes, not customer replies. |
 | **5** | Ticket properties | Changing status, priority or category saves immediately through the API. Admins can choose an owner from the assignment dropdown; Agents see the disabled ownership control. Last updated reflects saved ticket changes. |
@@ -193,7 +193,7 @@ HelpDeskAI.sln
 │   ├── HelpDeskAI.Api             HTTP controllers, JWT pipeline, Swagger, middleware
 │   ├── HelpDeskAI.Application     use cases, DTOs, validators, mapping, interfaces
 │   ├── HelpDeskAI.Domain          entities and domain enums
-│   └── HelpDeskAI.Infrastructure  EF Core, repositories, identity, OpenAI, seeding
+│   └── HelpDeskAI.Infrastructure  EF Core, repositories, identity, AI providers, seeding
 └── frontend/helpdesk-ai           standalone Angular application
     └── src/app
         ├── core                   API/auth services, guard, interceptors, models, environment config
@@ -222,7 +222,7 @@ flowchart LR
     end
     Client -->|"HTTP + Bearer JWT"| API
     Infra --> SqlServer[("SQL Server<br/>Users / Tickets / Comments")]
-    Infra -->|"AI analysis only"| OpenAI["OpenAI Chat Completions"]
+    Infra -->|"AI analysis only"| LLM["LLM providers<br/>OpenAI / Grok / Gemini / Claude"]
 ```
 
 Runtime calls travel outward through repository and service implementations, while source-code dependencies point toward the inner layers. Application depends on interfaces and does not know the database provider or HTTP implementation.
@@ -243,7 +243,7 @@ flowchart TB
 | API | HTTP routes, authorization, validation responses, middleware and dependency composition | [Program.cs](backend/src/HelpDeskAI.Api/Program.cs), [TicketsController.cs](backend/src/HelpDeskAI.Api/Controllers/TicketsController.cs) |
 | Application | Ticket and authentication use cases, DTOs, validation rules and repository/service contracts | [TicketService.cs](backend/src/HelpDeskAI.Application/Services/TicketService.cs), [validators](backend/src/HelpDeskAI.Application/Validation/RequestValidators.cs) |
 | Domain | User, Ticket, Comment and their enums | [entities](backend/src/HelpDeskAI.Domain/Entities), [enums](backend/src/HelpDeskAI.Domain/Enums/TicketEnums.cs) |
-| Infrastructure | EF Core persistence, migrations, seeding, password hashing, JWT generation and OpenAI HTTP client | [repositories](backend/src/HelpDeskAI.Infrastructure/Persistence/Repositories.cs), [OpenAiTicketService.cs](backend/src/HelpDeskAI.Infrastructure/AI/OpenAiTicketService.cs) |
+| Infrastructure | EF Core persistence, migrations, seeding, password hashing, JWT generation and per-provider LLM HTTP clients | [repositories](backend/src/HelpDeskAI.Infrastructure/Persistence/Repositories.cs), [AiTicketServiceBase.cs](backend/src/HelpDeskAI.Infrastructure/AI/AiTicketServiceBase.cs), [OpenAiTicketService.cs](backend/src/HelpDeskAI.Infrastructure/AI/OpenAiTicketService.cs) |
 | Frontend | Routed screens, forms, Material table, charts, client session and HTTP integration | [features](frontend/helpdesk-ai/src/app/features), [core services](frontend/helpdesk-ai/src/app/core) |
 
 ### Entity relationships
@@ -306,7 +306,7 @@ Seeding occurs only when the user table is empty. Existing databases are not res
 - SQL Server (LocalDB ships with Visual Studio; any SQL Server instance works by changing the connection string)
 - Node.js 22.22.3+ or 24.15+
 - npm 10+ (bundled with Node.js)
-- An OpenAI API key only when using **Analyze with AI**
+- An API key for at least one LLM provider (OpenAI, Grok, Gemini, or Claude) only when using **Analyze with AI**
 
 ## Backend setup
 
@@ -314,7 +314,11 @@ From the repository root:
 
 ```powershell
 dotnet restore HelpDeskAI.sln --configfile NuGet.Config
+# Set a key for whichever provider(s) you plan to use with Analyze with AI:
 dotnet user-secrets set --project backend/src/HelpDeskAI.Api "OpenAI:ApiKey" "YOUR_OPENAI_API_KEY"
+dotnet user-secrets set --project backend/src/HelpDeskAI.Api "Grok:ApiKey" "YOUR_GROK_API_KEY"
+dotnet user-secrets set --project backend/src/HelpDeskAI.Api "Gemini:ApiKey" "YOUR_GEMINI_API_KEY"
+dotnet user-secrets set --project backend/src/HelpDeskAI.Api "Claude:ApiKey" "YOUR_CLAUDE_API_KEY"
 dotnet run --project backend/src/HelpDeskAI.Api --launch-profile http
 ```
 
@@ -329,7 +333,7 @@ $env:OPENAI__APIKEY="YOUR_OPENAI_API_KEY"
 $env:JWT__KEY="a-long-random-signing-key-of-at-least-32-characters"
 ```
 
-The local development `Jwt:Key` in `appsettings.json` is only a convenience for running the POC; never reuse it in a real deployment, and do not commit OpenAI keys. For production, provide the connection string, JWT key, OpenAI key/model, allowed frontend origin, and HTTPS settings through the deployment secret/configuration system. AutoMapper 15+ also requires a commercial `AutoMapper:LicenseKey` for production deployment; development and testing are permitted without one.
+The local development `Jwt:Key` in `appsettings.json` is only a convenience for running the POC; never reuse it in a real deployment, and do not commit LLM provider keys. For production, provide the connection string, JWT key, LLM provider keys/models, allowed frontend origin, and HTTPS settings through the deployment secret/configuration system. AutoMapper 15+ also requires a commercial `AutoMapper:LicenseKey` for production deployment; development and testing are permitted without one.
 
 ## Frontend setup
 
@@ -357,23 +361,28 @@ Registered users receive the Agent role. Only Admin users can assign agents or d
 
 ## AI flow
 
+**Analyze with AI** is a dropdown: staff choose which LLM provider runs the analysis — **OpenAI**, **Grok**, **Gemini**, or **Claude**. The chosen provider is sent to the backend, which resolves the matching service and calls that provider's API.
+
 ```mermaid
 sequenceDiagram
     actor Agent
     participant UI as Ticket detail
     participant API as TicketsController
     participant Service as TicketService
-    participant AI as IAiTicketService
-    participant OpenAI as OpenAI API
+    participant Resolver as IAiTicketServiceResolver
+    participant AI as Provider service
+    participant LLM as Selected LLM API
     participant DB as SQL Server
 
-    Agent->>UI: Click Analyze with AI
-    UI->>API: POST /api/tickets/{id}/analyze + JWT
-    API->>Service: AnalyzeAsync(id, cancellationToken)
-    Service->>DB: Load ticket title and description
+    Agent->>UI: Pick a provider from Analyze with AI
+    UI->>API: POST /api/tickets/{id}/analyze?provider=... + JWT
+    API->>Service: AnalyzeAsync(id, provider, cancellationToken)
+    Service->>DB: Load ticket title, description and comments
+    Service->>Resolver: Resolve(provider)
+    Resolver-->>Service: Matching IAiTicketService
     Service->>AI: AnalyzeAsync(title, description)
-    AI->>OpenAI: POST /v1/chat/completions with strict JSON schema
-    OpenAI-->>AI: Category, sentiment, suggestedReply
+    AI->>LLM: Provider-specific request with structured JSON schema
+    LLM-->>AI: Category, sentiment, suggestedReply
     AI-->>Service: Deserialize typed analysis result
     Service->>Service: Parse category and sentiment enums
     Service->>DB: Save analysis fields and UpdatedAt together
@@ -393,11 +402,22 @@ sequenceDiagram
 | Sentiment | Negative | Adds a tone badge on the ticket detail page. |
 | Suggested reply | Acknowledge a duplicate charge and ask for an invoice reference. | Stores an editable draft for staff to review. No outbound message is sent. |
 
-The provider receives the title and description, not internal comments, passwords or the full user profile. Instructions ask it to acknowledge the issue, avoid invented facts and suggest a next step. The strict schema limits category and sentiment to the supported values. AI classification and reply wording can still be wrong; staff should review the result.
+The provider receives the title, description and any internal comments on the ticket, not passwords or the full user profile. Instructions ask it to acknowledge the issue, avoid invented facts and suggest a next step. A structured JSON schema limits category and sentiment to the supported values. AI classification and reply wording can still be wrong; staff should review the result.
 
-The typed client has a 45-second timeout and passes the cancellation token to network calls. Missing configuration and handled provider/network/JSON failures become a 502 response with a message shown by the frontend. There is no mock fallback, automatic retry, streaming, or automatic analysis on creation.
+Each typed client has a 45-second timeout and passes the cancellation token to network calls. Transient provider responses (HTTP 429, 500, 502, 503, 504) and network errors are retried up to three times with a short backoff. Missing configuration and other handled provider/network/JSON failures become a 502 response with a message shown by the frontend. There is no mock fallback, streaming, or automatic analysis on creation.
 
-The API key never reaches the browser. The model defaults to `gpt-5.6-luna` and is configurable with `OpenAI:Model`. The implementation follows the official [Chat Completions API reference](https://developers.openai.com/api/reference/cli/resources/chat); current model IDs are listed in the [OpenAI model catalog](https://developers.openai.com/api/docs/models).
+### Providers
+
+API keys never reach the browser; every provider is configured server-side. Each provider is a separate `IAiTicketService` in `Infrastructure/AI`, sharing one base pipeline (`AiTicketServiceBase`) and selected at request time by `IAiTicketServiceResolver`. Every provider has its own configuration section with `ApiKey`, `Model` and `BaseUrl`; if a provider's `ApiKey` is not set, its analysis request returns a 502 with a clear "not configured" message.
+
+| Provider | Config section | Default model | Provider API |
+|---|---|---|---|
+| OpenAI | `OpenAI` | `gpt-5.6-luna` | Chat Completions |
+| Grok (xAI) | `Grok` | `grok-4` | OpenAI-compatible chat completions |
+| Gemini (Google) | `Gemini` | `gemini-3.6-flash` | `generateContent` |
+| Claude (Anthropic) | `Claude` | `claude-sonnet-4-5` | Messages API |
+
+Set each key with user-secrets or environment variables (for example `OpenAI__ApiKey`, `Grok__ApiKey`, `Gemini__ApiKey`, `Claude__ApiKey`) and override any `Model` per section. The default model IDs are placeholders; use the current IDs from each provider's catalog.
 
 ## Useful commands
 
@@ -435,7 +455,7 @@ All ticket, dashboard and user-list routes require a JWT with Admin or Agent rol
 | `DELETE /api/tickets/{id}` | Delete ticket and comments; Admin only | 204, no body |
 | `POST /api/tickets/{id}/assign` | Assign a user as owner; Admin only | 200 |
 | `POST /api/tickets/{id}/comments` | Add an internal comment as the current user | 201 |
-| `POST /api/tickets/{id}/analyze` | Run AI analysis and store its result | 200 |
+| `POST /api/tickets/{id}/analyze?provider=` | Run AI analysis with the chosen provider (`OpenAi`, `Grok`, `Gemini`, `Claude`; defaults to `OpenAi`) and store its result | 200 |
 | `GET /api/users/agents` | List available owners; currently returns all users | 200 |
 
 List parameters: `search`, `status`, `category`, `priority`, `assignedAgentId`, `page` and `pageSize`. The assignment filter is available in the API but is not exposed in the current queue UI.

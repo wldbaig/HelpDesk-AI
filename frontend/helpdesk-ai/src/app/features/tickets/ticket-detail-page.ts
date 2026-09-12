@@ -4,11 +4,13 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize, Observable } from 'rxjs';
+import { AI_PROVIDERS } from '../../core/ai-providers';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { Ticket, User } from '../../core/models';
@@ -23,6 +25,7 @@ import { TICKET_CATEGORIES, TICKET_PRIORITIES, TICKET_STATUSES } from '../../cor
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatMenuModule,
     MatProgressSpinnerModule,
     MatSelectModule,
   ],
@@ -47,6 +50,7 @@ export class TicketDetailPage {
   readonly statuses = TICKET_STATUSES;
   readonly priorities = TICKET_PRIORITIES;
   readonly categories = TICKET_CATEGORIES;
+  readonly aiProviders = AI_PROVIDERS;
 
   readonly commentForm = this.fb.nonNullable.group({
     body: ['', [Validators.required, Validators.maxLength(2000)]],
@@ -62,10 +66,10 @@ export class TicketDetailPage {
     this.api.agents().subscribe((agents) => this.agents.set(agents));
   }
 
-  analyze(): void {
+  analyze(provider: string): void {
     this.analyzing.set(true);
     this.api
-      .analyze(this.id)
+      .analyze(this.id, provider)
       .pipe(finalize(() => this.analyzing.set(false)))
       .subscribe((ticket) => {
         this.setTicket(ticket);

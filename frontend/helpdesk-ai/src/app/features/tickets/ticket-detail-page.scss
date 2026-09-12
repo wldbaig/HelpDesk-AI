@@ -40,6 +40,8 @@
 .ai-button {
   background: linear-gradient(120deg, #396fdb, #704fd0) !important;
   color: #fff !important;
+  white-space: nowrap;
+  flex-shrink: 0;
 
   mat-spinner {
     display: inline-block;
